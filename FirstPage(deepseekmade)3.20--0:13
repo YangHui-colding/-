@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辉吧 - 首页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            height: 60px;
+            gap: 30px;
+        }
+
+        .logo a {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background-color: #f0f0f0;
+            color: #ff6b6b;
+        }
+
+        /* 搜索框样式 */
+        .search-form {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+
+        .search-box {
+            display: flex;
+            width: 100%;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #ff6b6b;
+        }
+
+        .search-box button {
+            padding: 8px 16px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .search-box button:hover {
+            background-color: #ff5252;
+        }
+
+        /* 用户区域样式 */
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #ff6b6b;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .username {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            color: #999;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            color: #ff6b6b;
+            background-color: #f0f0f0;
+        }
+
+        .login-link, .register-link {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .login-link:hover, .register-link:hover {
+            background-color: #f0f0f0;
+        }
+
+        .register-link {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .register-link:hover {
+            background-color: #ff5252;
+        }
+
+        /* 主要内容区域 */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 欢迎横幅 */
+        .welcome-banner {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-banner h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-banner p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        /* 帖子区域布局 */
+        .posts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        /* 最热帖子卡片 */
+        .hot-posts, .new-posts {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-header h3 {
+            font-size: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header .hot-icon {
+            color: #ff6b6b;
+        }
+
+        .section-header .new-icon {
+            color: #4ecdc4;
+        }
+
+        .more-link {
+            color: #999;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .more-link:hover {
+            color: #ff6b6b;
+        }
+
+        /* 帖子列表样式 */
+        .post-list {
+            list-style: none;
+        }
+
+        .post-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.3s;
+        }
+
+        .post-item:hover {
+            background-color: #fafafa;
+        }
+
+        .post-item:last-child {
+            border-bottom: none;
+        }
+
+        .post-title {
+            margin-bottom: 8px;
+        }
+
+        .post-title a {
+            color: #333;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .post-title a:hover {
+            color: #ff6b6b;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .post-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 分类区域 */
+        .categories-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .category-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .category-card h4 {
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .category-card p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .category-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 个人中心下拉菜单 */
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .profile-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        .profile-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f0f0f0;
+            color: #ff6b6b;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px 0;
+            }
+
+            .search-form {
+                order: 3;
+                max-width: 100%;
+                margin: 10px 0;
+            }
+
+            .posts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar">
+    <div class="nav-container">
+        <!-- Logo -->
+        <div class="logo">
+            <a th:href="@{/FirstPage}">辉吧</a>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a th:href="@{/FirstPage}">首页</a>
+            <a th:href="@{/category/list}">话题栏目</a>
+            <a th:href="@{/post/hot}">最热帖子</a>
+            <a th:href="@{/post/new}">最新帖子</a>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="search-form">
+            <form th:action="@{/search}" method="get" class="search-box">
+                <input type="text" name="keyword" placeholder="搜索帖子、话题..."
+                       th:value="${keyword}">
+                <button type="submit">搜索</button>
+            </form>
+        </div>
+
+        <!-- 用户区域 - 根据登录状态显示不同内容 -->
+        <div class="user-area" th:if="${session.loginUser != null}">
+            <div class="profile-dropdown">
+                <button class="profile-btn">
+                    <span class="avatar" th:text="${#strings.substring(session.loginUser.username, 0, 1)}">用</span>
+                    <span class="username" th:text="${session.loginUser.username}">用户名</span>
+                </button>
+                <div class="dropdown-content">
+                    <a th:href="@{'/user/' + ${session.loginUser.id}}">个人中心</a>
+                    <a th:href="@{/user/profile}">个人资料</a>
+                    <a th:href="@{/user/posts}">我的帖子</a>
+                    <a th:href="@{/user/settings}">设置</a>
+                    <a th:href="@{/logout}" style="color: #ff6b6b;">退出登录</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-area" th:unless="${session.loginUser != null}">
+            <a th:href="@{/login}" class="login-link">登录</a>
+            <a th:href="@{/register}" class="register-link">注册</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要内容区 -->
+<div class="container">
+    <!-- 欢迎横幅（未登录时显示） -->
+    <div class="welcome-banner" th:if="${session.loginUser == null}">
+        <h1>欢迎来到辉吧</h1>
+        <p>发现有趣的话题，分享你的观点，结识志同道合的朋友</p>
+    </div>
+
+    <!-- 欢迎横幅（已登录时显示） -->
+    <div class="welcome-banner" th:if="${session.loginUser != null}"
+         style="background: linear-gradient(135deg, #4ecdc4, #45b7af);">
+        <h1 th:text="'欢迎回来，' + ${session.loginUser.username} + '！'">欢迎回来！</h1>
+        <p>看看今天有什么新鲜事</p>
+    </div>
+
+    <!-- 帖子区域 -->
+    <div class="posts-grid">
+        <!-- 最热帖子 -->
+        <div class="hot-posts">
+            <div class="section-header">
+                <h3>
+                    <span class="hot-icon">🔥</span>
+                    最热帖子
+                </h3>
+                <a th:href="@{/post/hot}" class="more-link">查看更多 →</a>
+            </div>
+
+            <div class="post-list">
+                <!-- 这里用 th:each 循环显示最热帖子 -->
+                <div th:each="post : ${hotPosts}" class="post-item">
+
+                <div class="post-title">
+                        <a th:href="@{'/post/' + ${post.id}}" th:text="${post.title}">帖子标题</a>
+                    </div>
+                    <div class="post-meta">
+                        <span>👤 <span th:text="${post.user?.username ?: '匿名'}">作者</span></span>
+                        <span>👍 <span th:text="${post.likeCount ?: 0}">0</span></span>
+                        <span>💬 <span th:text="${post.replyCount ?: 0}">0</span></span>
+                        <span>👁️ <span th:text="${post.viewCount ?: 0}">0</span></span>
+                    </div>
+                </div>
+
+                <!-- 如果没有帖子，显示提示 -->
+                <div th:if="${hotPosts == null or hotPosts.isEmpty()}" class="post-item">
+                    <div class="post-title">
+                        <a>暂无热门帖子</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最新帖子 -->
+        <div class="new-posts">
+            <div class="section-header">
+                <h3>
+                    <span class="new-icon">🆕</span>
+                    最新帖子
+                </h3>
+                <a th:href="@{/post/new}" class="more-link">查看更多 →</a>
+            </div>
+
+            <div class="post-list">
+                <!-- 这里用 th:each 循环显示最新帖子 -->
+                <div th:each="post : ${newPosts}" class="post-item">
+                    <div class="post-title">
+                        <a th:href="@{'/post/' + ${post.id}}" th:text="${post.title}">帖子标题</a>
+                    </div>
+                    <div class="post-meta">
+                        <span>👤 <span th:text="${post.user?.username ?: '匿名'}">作者</span></span>
+                        <span>📅 <span th:text="${#temporals.format(post.createdAt, 'MM-dd HH:mm')}">01-01 12:00</span></span>
+                    </div>
+                </div>
+
+                <!-- 如果没有帖子，显示提示 -->
+                <div th:if="${newPosts == null or newPosts.isEmpty()}" class="post-item">
+                    <div class="post-title">
+                        <a>暂无最新帖子</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 话题栏目区域 -->
+    <div class="categories-section">
+        <div class="section-header">
+            <h3>📁 热门话题栏目</h3>
+            <a th:href="@{/category/list}" class="more-link">查看全部 →</a>
+        </div>
+
+        <div class="categories-grid">
+            <!-- 这里用 th:each 循环显示分类 -->
+            <div th:each="post : ${hotPosts}" class="post-item">
+                <h4 th:text="${category.categoryName ?: '未命名'}">栏目名称</h4>
+                <p th:text="${category.categoryDescription ?: '暂无描述'}">栏目描述</p>
+                <div class="category-stats">
+                    <span>📄 <span th:text="${category.posts?.size() ?: 0}">0</span> 帖子</span>
+                </div>
+            </div>
+
+            <!-- 如果没有分类，显示提示 -->
+            <div th:if="${categories == null or categories.isEmpty()}" class="category-card">
+                <h4>暂无话题栏目</h4>
+                <p>等待管理员创建</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
