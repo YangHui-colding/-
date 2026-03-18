@@ -1,0 +1,25 @@
+package com.example.firstwork.services;
+import com.example.firstwork.UserReposity.UserReposity;
+import org.springframework.stereotype.Service;
+
+@Service
+public class RegisterationGudger {
+    private UserReposity temUserReposity;
+    public boolean userNameGudge(UserReposity userReposity, String username) {
+        temUserReposity = userReposity;
+        if ((temUserReposity.findByUsername(username)) != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public boolean passwordGudge(String password) {
+        if ((password.length() < 6)||(password.length() > 18)) {
+            return false;
+        } else if (password.matches(".*[0-9]*[a-zA-Z]*")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
