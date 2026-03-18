@@ -1,19 +1,24 @@
 package com.example.firstwork.entity;
+import com.example.firstwork.UserReposity.UserReposity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 @Entity
-@Table(name="users")
+@Table(name="user")//表名
 public class User {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id")
     private long id;
-    @Column(unique=true,nullable=true,length=10)
+    @Column(unique=true,nullable=true)
     private String username;
-    @Column(nullable = true,length=10)
+    @Column(nullable = true)
     private String password;
     @Column
     private String email;//目前未补齐邮箱验证
+    @OneToMany(mappedBy = "user")//注意mappedBy是变量名，不是表名
+    private List<Post> posts= new ArrayList<>();
     @Column(name="createAt")
     private LocalDateTime createAt;
     public User() {}
