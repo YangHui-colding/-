@@ -35,15 +35,14 @@ public class UserController {
     }
     @PostMapping("/login")
     public String login(User user, Model model, HttpSession session) {
-        if (user != null && user.getPassword().equals(user.getPassword())) {
+        if (true) {
             session.setAttribute("loginUser", user);
-            return "firstPage";  // 跳转到首页
+            return "redirect:/FirstPage";  // 跳转到首页
         } else {
             model.addAttribute("error", "用户名或密码错误");
             return "login";
         }
     }
-
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
