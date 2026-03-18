@@ -1,0 +1,52 @@
+package com.example.firstwork.controller;
+import com.example.firstwork.UserReposity.UserReposity;
+import com.example.firstwork.entity.User;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import com.example.firstwork.services.RegisterationGudger;//导入服务层的方法来进行判断
+@Controller
+public class UserController {
+    @Autowired//用户数据转化为SQL语言
+    private UserReposity userReposity;
+    @GetMapping("/register")
+    public String registerPage(){
+        return "register";
+    }
+    @PostMapping("/register")
+    public String register (User user, Model model) {
+            RegisterationGudger registerationGudger = new RegisterationGudger();
+            if (registerationGudger.userNameGudge(userReposity,user.getUsername())){
+                model.addAttribute("error", "用户名已存在，请换一个");
+                return "register";
+            }else if(registerationGudger.passwordGudge((user.getPassword()))){
+                model.addAttribute("success","恭喜你成为辉吧的一员");
+                userReposity.save(user);//记得保存user的信息到reposity里面
+                return "login";
+            }else model.addAttribute("error","密码不符合要求，还想加入辉吧？");
+            return "register";
+    }
+    @GetMapping("/login")
+    public String LoginPage() {
+        return "login";
+    }
+    @PostMapping("/login")
+    public String login(User user, Model model, HttpSession session) {
+        if (user != null && user.getPassword().equals(user.getPassword())) {
+            session.setAttribute("loginUser", user);
+            return "firstPage";  // 跳转到首页（稍后实现）
+        } else {
+            model.addAttribute("error", "用户名或密码错误");
+            return "login";
+        }
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+}
