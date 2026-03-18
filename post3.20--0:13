@@ -1,0 +1,26 @@
+package com.example.firstwork.entity;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+@Entity
+@Table(name="Post")
+public class Post {
+    @Id
+@GeneratedValue
+    private Long id;
+    public String title;
+    @Column(columnDefinition = "TEXT")//定义content在数据库中为TEXT文本
+    public String content;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    public User user;  // 作者
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;  // 所属栏目
+    @Column(nullable = true)
+    private LocalDateTime createdAt;
+    @Column(nullable = true)
+    private Integer viewCount = 0;  // 浏览量
+    @Column(nullable = true)
+    private Integer likeCount = 0;  // 点赞数
+
+}
