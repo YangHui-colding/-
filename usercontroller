@@ -37,7 +37,7 @@ public class UserController {
     public String login(User user, Model model, HttpSession session) {
         if (user != null && user.getPassword().equals(user.getPassword())) {
             session.setAttribute("loginUser", user);
-            return "firstPage";  // 跳转到首页（稍后实现）
+            return "firstPage";  // 跳转到首页
         } else {
             model.addAttribute("error", "用户名或密码错误");
             return "login";
