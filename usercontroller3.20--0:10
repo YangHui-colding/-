@@ -18,14 +18,14 @@ public class UserController {
     }
     @PostMapping("/register")
     public String register (User user, Model model) {
-            RegisterationGudger registerationGudger = new RegisterationGudger();
-            if (registerationGudger.userNameGudge(userReposity,user.getUsername())){
+        RegisterationGudger registerationGudger = new RegisterationGudger();
+            if (userReposity.findByUsername(user.getUsername())!=null){
                 model.addAttribute("error", "用户名已存在，请换一个");
                 return "register";
-            }else if(registerationGudger.passwordGudge((user.getPassword()))){
+            }else if(registerationGudger.passwordGudge(user.getPassword())){
                 model.addAttribute("success","恭喜你成为辉吧的一员");
-                userReposity.save(user);//记得保存user的信息到reposity里面
-                return "login";
+                userReposity.save(user);//保存user的信息到reposity里面
+                return "register";
             }else model.addAttribute("error","密码不符合要求，还想加入辉吧？");
             return "register";
     }
@@ -35,7 +35,7 @@ public class UserController {
     }
     @PostMapping("/login")
     public String login(User user, Model model, HttpSession session) {
-        if (true) {
+        if ((userReposity.findByUsername(user.getUsername())!=null)&&(user.getPassword().equals((userReposity.findByUsername(user.getUsername())).getPassword()))) {
             session.setAttribute("loginUser", user);
             return "redirect:/FirstPage";  // 跳转到首页
         } else {
