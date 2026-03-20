@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${post.title} + ' - 辉吧'">帖子详情</title>
+    <style>
+        /* ========== 复用首页的样式 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        /* 导航栏样式（完全复用首页） */
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            height: 60px;
+            gap: 30px;
+        }
+
+        .logo a {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background-color: #f0f0f0;
+            color: #ff6b6b;
+        }
+
+        .search-form {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+
+        .search-box {
+            display: flex;
+            width: 100%;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: #ff6b6b;
+        }
+
+        .search-box button {
+            padding: 8px 16px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .search-box button:hover {
+            background-color: #ff5252;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #ff6b6b;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .username {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            color: #999;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .logout-btn:hover {
+            color: #ff6b6b;
+            background-color: #f0f0f0;
+        }
+
+        .login-link, .register-link {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+
+        .login-link:hover {
+            background-color: #f0f0f0;
+        }
+
+        .register-link {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .register-link:hover {
+            background-color: #ff5252;
+        }
+
+        /* ========== 帖子详情页特有样式 ========== */
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 帖子主体 */
+        .post-detail {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .post-detail h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .post-meta {
+            color: #999;
+            font-size: 14px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 20px;
+        }
+
+        .post-meta a {
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        .post-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        /* 点赞按钮 */
+        .like-btn {
+            background: none;
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .like-btn:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .like-btn.liked {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        /* 回复区域 */
+        .replies-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .replies-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .replies-header h3 {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .reply-count {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        /* 回复列表 */
+        .reply-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .reply-item {
+            padding: 20px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .reply-item:last-child {
+            border-bottom: none;
+        }
+
+        .reply-meta {
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .reply-meta a {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .reply-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* 回复表单 */
+        .reply-form {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .reply-form h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .reply-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        .reply-form textarea:focus {
+            border-color: #ff6b6b;
+        }
+
+        .reply-form button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .reply-form button:hover {
+            background: #ff5252;
+        }
+
+        .login-prompt {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            color: #666;
+        }
+
+        .login-prompt a {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* 返回按钮 */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            color: #ff6b6b;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px 0;
+            }
+
+            .search-form {
+                order: 3;
+                max-width: 100%;
+                margin: 10px 0;
+            }
+
+            .post-detail {
+                padding: 20px;
+            }
+
+            .post-detail h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏（完全复用首页） -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="logo">
+            <a th:href="@{/FirstPage}">辉吧</a>
+        </div>
+
+        <div class="nav-links">
+            <a th:href="@{/FirstPage}">首页</a>
+            <a th:href="@{/category/list}">话题栏目</a>
+            <a th:href="@{/post/hot}">最热帖子</a>
+            <a th:href="@{/post/new}">最新帖子</a>
+        </div>
+
+        <div class="search-form">
+            <form th:action="@{/search}" method="get" class="search-box">
+                <input type="text" name="keyword" placeholder="搜索帖子、话题..."
+                       th:value="${keyword}">
+                <button type="submit">搜索</button>
+            </form>
+        </div>
+
+        <div class="user-area" th:if="${session.loginUser != null}">
+            <div class="user-info">
+                <span class="avatar" th:text="${#strings.substring(session.loginUser.username, 0, 1)}">用</span>
+                <span class="username" th:text="${session.loginUser.username}">用户名</span>
+            </div>
+            <a th:href="@{/logout}" class="logout-btn">退出</a>
+        </div>
+
+        <div class="user-area" th:unless="${session.loginUser != null}">
+            <a th:href="@{/login}" class="login-link">登录</a>
+            <a th:href="@{/register}" class="register-link">注册</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 帖子详情区域 -->
+<div class="container">
+    <!-- 返回链接 -->
+    <a th:href="@{/FirstPage}" class="back-link">← 返回首页</a>
+
+    <!-- 帖子主体 -->
+    <div class="post-detail">
+        <h1 th:text="${post.title}">帖子标题</h1>
+        <div class="post-meta">
+            作者：<a th:href="@{'/user/' + ${post.author.id}}" th:text="${post.author.username}">作者</a> ·
+            发布于：<span th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</span> ·
+            浏览：<span th:text="${post.viewCount}">0</span>
+        </div>
+        <div class="post-content" th:text="${post.content}">
+            帖子内容
+        </div>
+
+        <!-- 点赞按钮 -->
+        <button th:if="${session.loginUser != null}" class="like-btn"
+                th:data-post-id="${post.id}"
+                th:classappend="${post.likedByCurrentUser ? 'liked' : ''}">
+            👍 点赞 <span th:text="${post.likeCount}">0</span>
+        </button>
+        <span th:unless="${session.loginUser != null}" class="like-btn" style="opacity:0.5; cursor:not-allowed;">
+                👍 点赞 <span th:text="${post.likeCount}">0</span>
+            </span>
+    </div>
+
+    <!-- 回复区域 -->
+    <div class="replies-section">
+        <div class="replies-header">
+            <h3>全部回复</h3>
+            <span class="reply-count" th:text="${post.replyCount + '条回复'}">0条回复</span>
+        </div>
+
+        <!-- 回复列表 -->
+        <div class="reply-list">
+            <div th:each="reply : ${replies}" class="reply-item">
+                <div class="reply-meta">
+                    <a th:href="@{'/user/' + ${reply.author.id}}" th:text="${reply.author.username}">用户</a>
+                    <span th:text="${#temporals.format(reply.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 12:00</span>
+                </div>
+                <div class="reply-content" th:text="${reply.content}">回复内容</div>
+            </div>
+
+            <!-- 没有回复时显示 -->
+            <div th:if="${replies == null or replies.isEmpty()}" class="reply-item" style="text-align: center; color: #999;">
+                暂无回复，快来抢沙发吧！
+            </div>
+        </div>
+
+        <!-- 回复表单（需登录） -->
+        <div th:if="${session.loginUser != null}" class="reply-form">
+            <h4>发表回复</h4>
+            <form th:action="@{'/post/' + ${post.id} + '/reply'}" method="post">
+                <textarea name="content" rows="3" placeholder="写下你的回复..." required></textarea>
+                <button type="submit">发表回复</button>
+            </form>
+        </div>
+
+        <!-- 未登录提示 -->
+        <div th:unless="${session.loginUser != null}" class="login-prompt">
+            <a th:href="@{/login}">登录</a> 后可以发表回复
+        </div>
+    </div>
+</div>
+</body>
+</html>
