@@ -1,0 +1,37 @@
+package com.example.firstwork.controller;
+import jdk.jfr.Category;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import com.example.firstwork.entity.Post;
+import com.example.firstwork.entity.User;
+import java.util.List;
+import com.example.firstwork.UserReposity.PostService;
+
+@Controller
+public class FirstPageController {
+    @Autowired
+    private PostService postService;
+        @GetMapping("/FirstPage")
+    public String firstPage() {
+            return "FirstPage";
+    }
+        @PostMapping("FirstPage")
+    public String getcolunm(Model model) {
+
+            List<Post> hotPosts = postService.getHotPosts();  // 取前5
+            // 获取最新帖子
+            List<Post> newPosts = postService.getNewPosts();
+            // 获取所有栏目
+//            List<Category> categories = categoryService.getAllCategories();
+
+            model.addAttribute("hotPosts", hotPosts);
+            model.addAttribute("newPosts", newPosts);
+//            model.addText("categories", categories);
+
+            return "index";
+    }
+
+}
