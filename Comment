@@ -1,0 +1,55 @@
+package com.example.firstwork.entity;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name="comment")
+public class Comment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="comment-id")
+    private Long id;
+    @Column
+    private String comtent;
+    @Column
+    private LocalDateTime created;
+    @ManyToOne
+    @JoinColumn(name="User_id")
+    private User user;
+    @Column
+    private Integer likes;
+    @ManyToOne
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
+    @Column(nullable = true)
+    private Integer status = 0;
+    public Post getPost() {
+        return post;
+    }
+    public void setPost(Post post) {this.post = post;}
+    public Integer getStatus() {
+        return status;
+    }
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+    public Integer getLikes() {
+        return likes;
+    }
+    public void setLikes(Integer likes) {this.likes = likes;}
+    public String getComtent() {
+        return comtent;
+    }
+    public void setComtent(String comtent) {this.comtent = comtent;}
+    public LocalDateTime getCreated() {
+        return created;
+    }
+    public void setCreated(LocalDateTime created) {this.created = created;}
+    public User getUser() {
+        return user;
+    }
+    public void setUser(User user) {this.user = user;}
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+}
