@@ -1,0 +1,82 @@
+package com.example.firstwork.controller;
+import com.example.firstwork.UserReposity.PostReposity;
+import com.example.firstwork.UserReposity.UserReposity;
+import com.example.firstwork.entity.Post;
+import com.example.firstwork.entity.User;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import com.example.firstwork.UserReposity.UserService;//导入服务层的方法来进行判断
+
+import java.util.List;
+
+@Controller
+public class UserController {
+    @Autowired//用户数据转化为SQL语言
+    private UserReposity userReposity;
+    @Autowired
+    private PostReposity postReposity;
+    @GetMapping("/register")
+    public String registerPage(){
+        return "register";
+    }
+    @PostMapping("/register")
+    public String register (User user, Model model) {
+        UserService registerationGudger = new UserService();
+            if (userReposity.findByUsername(user.getUsername())!=null){
+                model.addAttribute("error", "用户名已存在，请换一个");
+                return "register";
+            }else if(registerationGudger.passwordGudge(user.getPassword())){
+                model.addAttribute("success","恭喜你成为辉吧的一员");
+                userReposity.save(user);//保存user的信息到reposity里面
+                return "register";
+            }else model.addAttribute("error","密码不符合要求，还想加入辉吧？");
+            return "register";
+    }
+    @GetMapping("/login")
+    public String LoginPage() {
+        return "login";
+    }
+    @PostMapping("/login")
+    public String login(User user, Model model, HttpSession session) {
+        if ((userReposity.findByUsername(user.getUsername())!=null)&&(user.getPassword().equals((userReposity.findByUsername(user.getUsername())).getPassword()))) {
+            User dbUser = userReposity.findByUsername(user.getUsername());
+            session.setAttribute("loginUser", dbUser);
+            return "redirect:/FirstPage";  // 跳转到首页
+        } else {
+            model.addAttribute("error", "用户名或密码错误");
+            return "login";
+        }
+    }
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+    @GetMapping("/user/{id}")
+    public String userProfile(@PathVariable Long id, Model model, HttpSession session) {
+        System.out.println("========== 进入个人中心 ==========");
+        System.out.println("用户ID: " + id);
+        User user =userReposity.findById(id).orElse(null);
+        if (user == null) {
+            System.out.println("用户不存在");
+            return "user_profile";
+        }
+        List<Post> userPosts = postReposity.findByUserIdOrderByCreatedAtDesc(id);
+        System.out.println("帖子数量: " + (userPosts != null ? userPosts.size() : 0));
+        User loginUser = (User) session.getAttribute("loginUser");
+        long unreadCount = 0;
+//        if (loginUser != null && loginUser.getId().equals(id)) {
+//            unreadCount = notificationService.getUnreadCount(id);
+//        }
+        model.addAttribute("user", user);
+        model.addAttribute("userPosts", userPosts);
+        model.addAttribute("unreadCount", unreadCount);
+
+        return "user_profile";
+    }
+}
