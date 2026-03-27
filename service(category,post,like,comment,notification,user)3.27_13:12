@@ -1,0 +1,295 @@
+package com.example.firstwork.UserReposity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.firstwork.entity.Category;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+@Repository
+public interface CategoryReposity extends JpaRepository<Category, Long> {
+        Category findBy(String categoryName);
+    Category findByName(String categoryName);
+    List<Category> findAll();
+    Category findById(long id);//注意返回的是optional容器，要用orElse或者get方法
+}
+package com.example.firstwork.UserReposity;
+import com.example.firstwork.entity.Category;
+import com.example.firstwork.entity.Post;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+@Service
+public class CategoryService {
+    @Autowired
+    private CategoryReposity categoryReposity;
+    @Autowired
+    private PostReposity postReposity;
+    public Category getDetailsCategory(Long id) {//看栏目
+        Category category = categoryReposity.findById(id).orElse(null);
+        if(category == null){
+            return null;
+        }else {
+           category.setViewCount(category.getViewCount()+1);
+            return category;
+        }
+       }
+    public Integer setCategory(String CategoryDescription,String CategoryName) {//设置栏目
+       if( categoryReposity.findByName(CategoryName)!=null){
+         return 0; //后期要加创建栏目失败
+       }
+        Category category=new Category();
+        category.setDescription(CategoryDescription);
+        category.setName(CategoryName);
+        category.setViewCount(category.getViewCount()+1);
+        categoryReposity.save(category);
+        return 1;
+    }
+  public Page<Post> getCategoryPost(Long categoryid,Pageable pageable) {
+     return postReposity.findByCategoryIdOrderByCreatedAtDesc(categoryid,pageable);
+  }
+}
+package com.example.firstwork.UserReposity;
+
+import com.example.firstwork.entity.Comment;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface CommentReposity extends JpaRepository<Comment, Integer> {
+  List<Comment> findFirstByOrderByLikeCountDesc(Integer number);
+  List<Comment> getCommentsByPostId(Long id);
+}
+package com.example.firstwork.UserReposity;
+
+import com.example.firstwork.entity.Comment;
+import com.example.firstwork.entity.Post;
+import com.example.firstwork.entity.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+
+import java.util.List;
+
+@Service
+public class CommentService {
+    @Autowired
+    CommentReposity commentReposity;
+    @Autowired
+    private PostReposity postReposity;
+    public List<Comment> getHotComments() {
+        return commentReposity.findFirstByOrderByLikeCountDesc(5);
+    }
+    public List<Comment> getCommentsByPostId(Long postid) {
+        return commentReposity.getCommentsByPostId(postid);
+    }
+    public Comment addComment(String comtent, User user,long postid) {
+        Post post = postReposity.findById(postid)
+                .orElseThrow(() -> new RuntimeException("帖子不存在，id=" + postid));
+        Comment newComment = new Comment();
+        newComment.setUser(user);
+        newComment.setStatus(0);
+        newComment.setContent(comtent);
+        newComment.setLikeCount(newComment.getLikeCount()+1);
+        newComment.setCreatedAt();
+        newComment.setPost(post);
+        commentReposity.save(newComment);
+        return newComment;
+    }
+}
+package com.example.firstwork.UserReposity;
+import com.example.firstwork.entity.Like;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+@Repository
+public interface LikeReposity extends JpaRepository<Like,Long> {
+    Like findByUserIdAndPostId(Long userId, Long postId);
+    long countByPostId(Long postId);
+    @Modifying
+    @Transactional
+    void deleteByUserIdAndPostId(Long userId, Long postId);
+}
+package com.example.firstwork.UserReposity;
+import com.example.firstwork.entity.Like;
+import com.example.firstwork.entity.Notification;
+import com.example.firstwork.entity.Post;
+import com.example.firstwork.entity.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+public class LikeService {
+    @Autowired
+    private LikeReposity likeReposity;
+    @Autowired
+    private PostReposity postReposity;
+    @Autowired
+    private NotificationReposity notificationReposity;
+    @Transactional
+    public boolean toLike(Long postId, User loginUser) {
+        Post post = postReposity.findById(postId).orElseThrow();
+        if ((likeReposity.findByUserIdAndPostId(loginUser.getId(), postId))!=null) {
+            likeReposity.deleteByUserIdAndPostId(loginUser.getId(), postId);
+            post.setLikeCount(post.getLikeCount() - 1);
+            postReposity.save(post);
+            return false;//取消点赞
+        } else {
+            Like like = new Like(loginUser, post);
+            like.setUser(loginUser);
+            like.setPost(post);
+            like.setCreatedAt();
+            likeReposity.save(like);
+            post.setLikeCount(post.getLikeCount() + 1);
+            postReposity.save(post);
+                Notification notice = new Notification(); // 创建通知（不是给自己的帖子）
+                notice.setUserId(post.getUser().getId());
+                notice.setContent(loginUser.getUsername() + " 赞了你的帖子");
+                notice.setLink("/postdetail/" + postId);
+                notice.setCreatedAt(LocalDateTime.now());
+                notificationReposity.save(notice);
+            return true;  // 点赞成功
+        }
+    }
+    public long getLikeCount(Long postId) {
+        return likeReposity.countByPostId(postId);
+    }
+    public boolean isLiked(Long postId, Long userId) {
+        return (likeReposity.findByUserIdAndPostId(userId, postId))!=null;
+    }
+}
+package com.example.firstwork.UserReposity;
+import com.example.firstwork.entity.Notification;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+public interface NotificationReposity extends JpaRepository<Notification, Long> {
+    long countByUserIdAndReadFalse(Long userId);
+    List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId);
+    @Modifying
+    @Transactional
+    @Query("UPDATE Notification n SET n.read = true WHERE n.userId = :userId")
+    void markAllAsRead(@Param("userId") Long userId);
+    @Modifying
+    @Transactional
+    void deleteByUserId(Long userId);
+}
+package com.example.firstwork.UserReposity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.firstwork.entity.Post;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+@Repository
+public interface PostReposity extends JpaRepository<Post,Long> {
+    Post findBy(String title);
+   List<Post> findByUserIdOrderByCreatedAtDesc(Long id);
+    Page<Post> findByCategoryIdOrderByCreatedAtDesc(Long categoryid, Pageable pageable);
+    List<Post> findFirstByOrderByLikeCountDesc(Integer number);
+    List<Post> findTopByOrderByCreatedAtDesc(Integer number);
+}
+package com.example.firstwork.UserReposity;
+
+import com.example.firstwork.entity.Post;
+import com.example.firstwork.entity.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public  class PostService {
+  @Autowired
+  PostReposity postReposity;
+  @Autowired
+  CategoryService categoryService;
+  @Autowired
+  CategoryReposity categoryReposity;
+    public List<Post>  getHotPosts(Integer number) {
+        // 按点赞数，取前limit条
+        return postReposity.findFirstByOrderByLikeCountDesc(5);
+    }
+    public List<Post> getNewPosts(Integer number) {
+        // 按创建时间，取前limit条
+        return postReposity.findTopByOrderByCreatedAtDesc(5);
+    }
+    public Post getDetailsPost(Long id) {
+        Post post=postReposity.findById(id).orElse(null);//findById从数据库中拿出来的是optional盒子，要用get方法或者orElse方法来拿取其中的。
+        if(post!=null){
+            post.setViewCount(post.getViewCount()+1);//VIEW+1
+            postReposity.save(post);
+            return post;
+        }else {
+            return null;
+        }
+    }
+    public Post createPost(User user, String content,String title,Long categoryId) {
+        Post post=new Post();
+        post.setUser(user);
+        post.setCreatedAt();
+        post.setCategory(categoryReposity.findById(categoryId).orElse(null));
+        post.setViewCount(0);
+        post.setTitle(title);
+        post.setContent(content);
+        post.setCommentCount(0);
+        postReposity.save(post);
+        return post;
+    }
+    public Post updatePost(Post post) {
+        postReposity.save(post);
+        return post;
+    }
+    public void deletePost(Long id) {
+        postReposity.deleteById(id);
+    }
+    public Post likePost(Post post) {
+        postReposity.save(post);
+        return post;
+    }
+    public Post commentPost(Post post) {
+        post.setCommentCount(post.getCommentCount()+1);
+        postReposity.save(post);
+        return post;
+    }
+
+}
+package com.example.firstwork.UserReposity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.firstwork.entity.User;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+@Repository
+public interface UserReposity extends JpaRepository<User, Long> {
+    User findByUsername(String username);
+    boolean findByPassword(String password);
+    List<User> id(long id);
+}
+package com.example.firstwork.UserReposity;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserService {
+    private UserReposity temUserReposity;
+    public boolean passwordGudge(String password) {
+        if ((password.length() < 6)||(password.length() > 18)) {
+            return false;
+        } else if (password.matches(".*[0-9]*[a-zA-Z]*")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
